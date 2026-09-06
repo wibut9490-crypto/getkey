@@ -1,0 +1,107 @@
+<?php
+session_start();
+
+// Lấy Token từ URL (Ví dụ: getkey.php?token=123xyz)
+$token = $_GET['token'] ?? '';
+$isValid = false;
+
+// Kiểm tra xem Token có hợp lệ trong Session không
+if (!empty($token) && isset($_SESSION['tokens'][$token])) {
+    $createdTime = $_SESSION['tokens'][$token];
+    
+    // Giới hạn Token chỉ có hiệu lực trong 5 phút (300 giây)
+    if ((time() - $createdTime) <= 300) {
+        $isValid = true;
+        
+        // Tạo Key ngẫu nhiên (hoặc bạn tự đổi thành Key cố định/Key lấy từ database)
+        $userKey = "KEY-" . strtoupper(substr(md5(uniqid(rand(), true)), 0, 12));
+        
+        // XÓA TOKEN NGAY LẬP TỨC để ngăn chia sẻ link hoặc tải lại trang
+        unset($_SESSION['tokens'][$token]);
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Lấy Key</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .key-box {
+            background: #eef2f7;
+            border: 2px dashed #007bff;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            letter-spacing: 2px;
+            margin: 20px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: all;
+        }
+        .warning-box {
+            background: #ffebe9;
+            border: 1px solid #ff4d4f;
+            color: #d93025;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <?php if ($isValid): ?>
+        <h2>🎉 Lấy Key Thành Công</h2>
+        <p>Bấm vào ô bên dưới để sao chép Key:</p>
+        
+        <!-- Ô vuông hiển thị Key -->
+        <div class="key-box" onclick="navigator.clipboard.writeText(this.innerText); alert('Đã sao chép Key!');">
+            <?php echo $userKey; ?>
+        </div>
+        
+        <p style="font-size: 12px; color: #777;">Lưu ý: Link này chỉ sử dụng được 1 lần.</p>
+
+    <?php else: ?>
+        <div class="warning-box">
+            <h3>⚠️ Cảnh báo!</h3>
+            <p>Bạn chưa vượt link hoặc đường dẫn lấy Key đã hết hạn/đã được sử dụng.</p>
+        </div>
+        <p>Vui lòng thực hiện vượt link để lấy Key mới:</p>
+        <!-- Thay link bên dưới bằng link trang bấm vượt link của bạn -->
+        <a href="https://hackallgame.netlify.app/" class="btn">Đến trang vượt link</a>
+    <?php endif; ?>
+</div>
+
+</body>
+</html>
